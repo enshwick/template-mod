@@ -11,6 +11,7 @@
 clippy.toml
 committed.toml
 deny.toml
+docs/.markdownlint.yaml
 lefthook.yml
 renovate.json
 rust-toolchain.toml
