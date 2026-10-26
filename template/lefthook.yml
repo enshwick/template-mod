@@ -23,7 +23,7 @@ commit-msg:
       run: >-
         head -n1 {1} | grep -qE '^(Merge |Revert "|fixup! |squash! |amend! )' ||
         { committed --commit-file {1} &&
-        ! head -n1 {1} | grep -E ': [A-Z]|[<>]'; }
+        ! head -n1 {1} | grep -E '^[a-z]+(\([^)]*\))?!?: [A-Z]|[<>]'; }
 
 # Nothing that compiles: the hook stays under ten seconds. The compiling
 # checks are `cargo xtask check` (what the branch touches) and
@@ -51,7 +51,7 @@ pre-push:
           header=$(git log -1 --format=%s "$commit")
           case "$header" in 'Revert "'* | 'fixup! '* | 'squash! '* | 'amend! '*) continue ;; esac
           git log -1 --format=%B "$commit" | committed --commit-file - || exit 1
-          if printf '%s\n' "$header" | grep -E ': [A-Z]|[<>]'; then exit 1; fi
+          if printf '%s\n' "$header" | grep -E '^[a-z]+(\([^)]*\))?!?: [A-Z]|[<>]'; then exit 1; fi
         done
     deny:
       glob:
