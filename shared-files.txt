@@ -1,0 +1,17 @@
+# Files under template/ that every rendered repository keeps exactly as
+# rendered; the organization's CI fails a pull request whose copy differs
+# from the template at the commit its .copier-answers.yml pins. A change
+# belongs here and reaches the repositories through copier update. One path
+# per line, relative to the rendered repository.
+.cargo/config.toml
+.github/workflows/ci.yml
+.github/workflows/dev-build.yml
+.github/workflows/release-plz.yml
+.markdownlint-cli2.yaml
+clippy.toml
+deny.toml
+lefthook.yml
+renovate.json
+rust-toolchain.toml
+rustfmt.toml
+tools/check-commit-message.ts

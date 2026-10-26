@@ -12,3 +12,6 @@ copier update --trust                                     # in a mod repository:
 ```
 
 Then `bun install` once for the git hooks, and commit `bun.lock`.
+
+[shared-files.txt](shared-files.txt) lists the files a rendered repository
+keeps exactly as rendered; CI fails a pull request whose copy differs.
