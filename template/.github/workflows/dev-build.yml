@@ -1,5 +1,6 @@
 # Replaces the mod's DLL on the rolling `dev` prerelease, by hand, with its
-# PDB, its SBOM and a build provenance attestation of each file.
+# PDB, its SBOM and a build provenance attestation of each file, then starts
+# the docs site's build.
 name: dev-build
 
 on:
@@ -20,3 +21,12 @@ jobs:
       # The build provenance attestations.
       id-token: write
       attestations: write
+
+  # The docs site takes the mod's page from its newest release; start the
+  # site's build once the prerelease moved.
+  docs:
+    needs: build
+    uses: enshwick/.github/.github/workflows/docs-rebuild.yml@main # zizmor: ignore[unpinned-uses]
+    secrets:
+      ENSHWICK_CI_CLIENT_ID: ${{ secrets.ENSHWICK_CI_CLIENT_ID }}
+      ENSHWICK_CI_PRIVATE_KEY: ${{ secrets.ENSHWICK_CI_PRIVATE_KEY }}
