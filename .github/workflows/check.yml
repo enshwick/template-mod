@@ -1,0 +1,28 @@
+# Renders the template on every pull request: mod ids are <author>.<name>,
+# and a bare name or a second dot is refused.
+name: check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: check-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  template:
+    permissions:
+      contents: read
+    # main: the organization runners run only workflows from main.
+    uses: enshwick/.github/.github/workflows/copier-template.yml@main # zizmor: ignore[unpinned-uses]
+    with:
+      render: |
+        mod_id=enshwick.test-mod
+        mod_id=someone.x2 side=client
+      refuse: |
+        mod_id=test-mod
+        mod_id=a.b.c
+        mod_id=Upper.case
