@@ -78,6 +78,8 @@ struct Package {
     windows_only: bool,
     /// Whether it builds a DLL: a mod.
     cdylib: bool,
+    /// Whether it has a Rust library, the target doctests run from.
+    lib: bool,
 }
 
 /// The workspace packages, from `cargo metadata`.
@@ -95,18 +97,25 @@ fn packages() -> Result<Vec<Package>, String> {
         .as_array()
         .into_iter()
         .flatten()
-        .map(|package| Package {
-            name: package["name"].as_str().unwrap_or_default().to_owned(),
-            windows_only: package["metadata"]["enshwick"]["windows-only"].as_bool() == Some(true),
-            cdylib: package["targets"]
-                .as_array()
-                .into_iter()
-                .flatten()
-                .any(|target| {
-                    target["crate_types"]
-                        .as_array()
-                        .is_some_and(|types| types.iter().any(|t| t == "cdylib"))
-                }),
+        .map(|package| {
+            let types = |wanted: &[&str]| {
+                package["targets"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .any(|target| {
+                        target["crate_types"].as_array().is_some_and(|types| {
+                            types.iter().any(|t| wanted.iter().any(|w| t == w))
+                        })
+                    })
+            };
+            Package {
+                name: package["name"].as_str().unwrap_or_default().to_owned(),
+                windows_only: package["metadata"]["enshwick"]["windows-only"].as_bool()
+                    == Some(true),
+                cdylib: types(&["cdylib"]),
+                lib: types(&["lib", "rlib"]),
+            }
         })
         .collect())
 }
@@ -204,7 +213,14 @@ fn check(packages: &[Package], all: bool) -> bool {
     }
     steps.push(host(&["clippy", "--all-targets"]).then(&["--", "-D", "warnings"]));
     steps.push(host(&["nextest", "run", "--no-tests=pass"]));
-    steps.push(host(&["test", "--doc"]));
+    // Doctests need a library; off Windows a Windows-only one runs them
+    // under Wine.
+    if packages
+        .iter()
+        .any(|p| p.lib && (cfg!(windows) || !p.windows_only))
+    {
+        steps.push(host(&["test", "--doc"]));
+    }
     if all {
         steps.push(host(&["doc", "--no-deps"]).env("RUSTDOCFLAGS", "-D warnings"));
         steps.push(Step::new(&["deny", "check"]));
