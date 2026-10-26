@@ -1,4 +1,4 @@
-{%- set type_name = mod_id.split('-') | map('capitalize') | join -%}
+{%- set type_name = (mod_id.split('.') | last).split('-') | map('capitalize') | join -%}
 //! {{ description | trim('.') }}.
 
 use std::sync::atomic::{AtomicBool, Ordering};
