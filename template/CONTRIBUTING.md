@@ -1,8 +1,10 @@
 # Contributing
 
 You need Rust (`rust-toolchain.toml` installs the pinned version through
-rustup), [Bun](https://bun.sh) for the git hooks, cargo-nextest, and off
-Windows [cargo-xwin](https://github.com/rust-cross/cargo-xwin).
+rustup), [Bun](https://bun.sh) for the git hooks, cargo-nextest,
+[committed](https://github.com/crate-ci/committed) for commit messages,
+[typos](https://github.com/crate-ci/typos), cargo-deny, and off Windows
+[cargo-xwin](https://github.com/rust-cross/cargo-xwin).
 
 ```bash
 bun install          # the git hooks

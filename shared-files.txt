@@ -9,9 +9,9 @@
 .github/workflows/release-plz.yml
 .markdownlint-cli2.yaml
 clippy.toml
+committed.toml
 deny.toml
 lefthook.yml
 renovate.json
 rust-toolchain.toml
 rustfmt.toml
-tools/check-commit-message.ts
