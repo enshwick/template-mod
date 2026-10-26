@@ -1,10 +1,14 @@
-# The merge gate: `cargo xtask check` on the organization runners through the
-# shared workflow, on every pull request and nightly. The nightly lane adds
-# unused dependencies, coverage, external links and benchmarks.
+# The merge gate: `cargo xtask check` through the shared workflow. While the
+# owner's PC is online the whole check runs there natively; otherwise it runs
+# on a GitHub-hosted runner. A push to main fills the build caches pull
+# requests start from. The nightly lane adds unused dependencies, coverage,
+# external links and benchmarks.
 name: ci
 
 on:
   pull_request:
+  push:
+    branches: [main]
   schedule:
     - cron: "37 2 * * *"
   workflow_dispatch:
@@ -17,8 +21,10 @@ on:
 permissions: {}
 
 concurrency:
-  group: ci-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  # Only a pull request's newer push cancels its older run: a run on main
+  # fills the caches pull requests start from and must finish.
+  group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   rust:
@@ -26,6 +32,10 @@ jobs:
     uses: enshwick/.github/.github/workflows/rust-ci.yml@main # zizmor: ignore[unpinned-uses]
     permissions:
       contents: read
+    # The enshwick-ci app tells the shared workflow whether the PC is online.
+    secrets:
+      ENSHWICK_CI_CLIENT_ID: ${{ secrets.ENSHWICK_CI_CLIENT_ID }}
+      ENSHWICK_CI_PRIVATE_KEY: ${{ secrets.ENSHWICK_CI_PRIVATE_KEY }}
 
   nightly:
     if: github.event_name == 'schedule' || inputs.nightly
