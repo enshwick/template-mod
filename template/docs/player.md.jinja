@@ -1,0 +1,34 @@
+---
+id: {{ mod_id }}
+name: {{ mod_name }}
+summary: {{ description | trim('.') }}.
+{#- A mod with side both that sets join: true needs everyone; one that only
+    the server or host needs is server. #}
+needs: {% if side == 'server' %}server{% elif side == 'client' %}client{% else %}everyone{% endif %}
+settings:
+  - key: enabled
+    default: true
+    meaning: Whether the mod does its work.
+    applies: at-once
+---
+
+- {{ description | trim('.') }}.
+
+## Install
+
+Download {{ mod_name }} from its
+[releases](https://github.com/{{ repository }}/releases) and put it in your game
+folder, as the [install guide](https://enshwick.github.io/docs/guides/install/)
+shows. It runs on enshwick.
+
+## Settings
+
+You change these values in the game, as the
+[settings guide](https://enshwick.github.io/docs/guides/change-mod-settings/)
+shows.
+
+## Problems
+
+**Something goes wrong.** Open an issue in the
+[mod's repository](https://github.com/{{ repository }}/issues). Attach the files
+from the `logs/enshwick/` folder in your game folder.

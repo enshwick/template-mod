@@ -1,0 +1,6 @@
+# The repository's rules, and one more: the player pages open with their
+# list of changes, since the site makes the title from the front matter.
+# A nested file replaces the root configuration instead of merging into it.
+line-length: false
+no-duplicate-heading: { siblings_only: true }
+first-line-heading: false
