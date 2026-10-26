@@ -1,13 +1,14 @@
 _subdirectory: template
 _answers_file: .copier-answers.yml
-# The mod's own code and texts start from the template and are the mod's
-# from then on: copier update leaves them alone.
-_skip_if_exists:
-  - src/lib.rs
-  - src/texts.toml
-  - docs/player.md
-  - docs/player.uk.md
-_min_copier_version: "9.4"
+# The mod's own code, texts and player pages start from the template and
+# are the mod's from then on: copier update neither changes them nor adds
+# them to a mod that has none.
+_exclude:
+  - "{% if _copier_operation == 'update' %}src/lib.rs{% endif %}"
+  - "{% if _copier_operation == 'update' %}src/texts.toml{% endif %}"
+  - "{% if _copier_operation == 'update' %}docs/player.md{% endif %}"
+  - "{% if _copier_operation == 'update' %}docs/player.uk.md{% endif %}"
+_min_copier_version: "9.5"
 
 # `<author>.<name>`, each part of [a-z0-9-], at most 64 characters in all:
 # the rule the loader checks. The name part names the crate, the repository
