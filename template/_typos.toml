@@ -1,5 +1,5 @@
 [files]
-extend-exclude = ["CHANGELOG.md", "*.lock", "bun.lock", "*.exports"]
+extend-exclude = ["CHANGELOG.md", "*.lock", "bun.lock", "*.exports", "texts.toml"]
 
 [default.extend-words]
 # Engine and game names.
