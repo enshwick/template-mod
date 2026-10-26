@@ -9,16 +9,19 @@ _skip_if_exists:
   - docs/player.uk.md
 _min_copier_version: "9.4"
 
+# `<author>.<name>`, each part of [a-z0-9-], at most 64 characters in all:
+# the rule the loader checks. The name part names the crate, the repository
+# and the mod's type.
 mod_id:
   type: str
-  help: The mod's id, 1 to 64 characters of [a-z0-9-] starting with a letter (build-camera)
+  help: The mod's id, <author>.<name>, each part of [a-z0-9-], at most 64 characters (enshwick.build-camera)
   validator: >-
-    {% if not (mod_id | regex_search('^[a-z][a-z0-9-]{0,63}$')) %}not [a-z][a-z0-9-]{0,63}{% endif %}
+    {% if not (mod_id | regex_search('^[a-z0-9-]+\\.[a-z0-9-]+$')) or (mod_id | length) > 64 %}not <author>.<name> of [a-z0-9-], at most 64 characters{% endif %}
 
 mod_name:
   type: str
   help: The name players read
-  default: "{{ mod_id | replace('-', ' ') | capitalize }}"
+  default: "{{ (mod_id.split('.') | last) | replace('-', ' ') | capitalize }}"
 
 description:
   type: str
@@ -34,7 +37,7 @@ side:
 crate_name:
   type: str
   help: The crate, and the DLL as crate_name with underscores
-  default: "enshwick-{{ mod_id }}"
+  default: "enshwick-{{ mod_id.split('.') | last }}"
 
 enshwick_version:
   type: str
@@ -44,4 +47,4 @@ enshwick_version:
 repository:
   type: str
   help: The mod's GitHub repository
-  default: "enshwick/mod-{{ mod_id }}"
+  default: "enshwick/mod-{{ mod_id.split('.') | last }}"
