@@ -45,4 +45,6 @@ pre-push:
         - '**/Cargo.toml'
         - 'Cargo.lock'
         - 'deny.toml'
-      run: cargo deny check
+      # Advisories need the network and change without any commit: CI's
+      # full suite checks them every night.
+      run: cargo deny check bans licenses sources
