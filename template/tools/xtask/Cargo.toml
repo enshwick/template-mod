@@ -7,5 +7,8 @@ rust-version = "1.99"
 license = "MIT"
 publish = false
 
+[dependencies]
+zip = { version = "9.1.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+
 [lints]
 workspace = true
