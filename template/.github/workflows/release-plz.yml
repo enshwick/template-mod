@@ -1,0 +1,30 @@
+# Release pull requests and releases with release-plz (release-plz.toml), run
+# by hand only. `release-pr` opens or updates the release pull request and
+# starts ci.yml on it; `release`, after that pull request merged, tags the
+# mod `v<version>` and makes its GitHub release.
+name: release-plz
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: What to run
+        type: choice
+        options:
+          - release-pr
+          - release
+        default: release-pr
+
+permissions: {}
+
+jobs:
+  release-plz:
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+      id-token: write
+    # main: the organization runners run only workflows from main.
+    uses: enshwick/.github/.github/workflows/release-plz.yml@main # zizmor: ignore[unpinned-uses]
+    with:
+      command: ${{ inputs.command }}

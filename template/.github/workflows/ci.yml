@@ -1,5 +1,6 @@
 # The merge gate: `cargo xtask check` on the organization runners through the
-# shared workflow, on every pull request and nightly.
+# shared workflow, on every pull request and nightly. The nightly lane adds
+# unused dependencies, coverage, external links and benchmarks.
 name: ci
 
 on:
@@ -7,6 +8,11 @@ on:
   schedule:
     - cron: "37 2 * * *"
   workflow_dispatch:
+    inputs:
+      nightly:
+        description: Also run the nightly lane.
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -18,5 +24,11 @@ jobs:
   rust:
     # main: the organization runners run only workflows from main.
     uses: enshwick/.github/.github/workflows/rust-ci.yml@main # zizmor: ignore[unpinned-uses]
+    permissions:
+      contents: read
+
+  nightly:
+    if: github.event_name == 'schedule' || inputs.nightly
+    uses: enshwick/.github/.github/workflows/rust-nightly.yml@main # zizmor: ignore[unpinned-uses]
     permissions:
       contents: read

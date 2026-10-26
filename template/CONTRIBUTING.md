@@ -21,3 +21,8 @@ patches and threads, so those are skipped there.
 The hooks check formatting, spelling, Markdown and commit messages and
 compile nothing. A pull request title is a conventional commit,
 `<type>(<scope>): <subject>`, and becomes the squashed commit.
+
+Releases are cut by hand with the `release-plz` workflow: `release-pr` opens
+the release pull request with the next version and `CHANGELOG.md`, and
+`release` tags `v<version>` once it merged. The `dev-build` workflow replaces
+the rolling `dev` prerelease.
