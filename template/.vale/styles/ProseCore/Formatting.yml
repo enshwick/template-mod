@@ -1,0 +1,16 @@
+# Headings that announce a summary instead of naming its subject.
+#
+# Vale strips markup before a rule sees the text, so a heading arrives as its
+# words alone and a token anchored on "#" never matches. Three tokens here were
+# written against the raw markup and matched nothing for as long as they existed:
+# two list labels and a length limit on bold. The bold one also fired by
+# accident, because Vale masks an inline code span with asterisks and two spans
+# more than 80 characters apart look like one long bold run.
+extends: existence
+message: "Machine-style formatting: '%s'"
+level: suggestion
+scope: heading
+ignorecase: true
+tokens:
+  - '(Conclusion|Final Thoughts|Key Takeaways|Висновки|Підсумки)\s*$'
+  - '(Challenges and|Виклики та|Переваги та недоліки)'

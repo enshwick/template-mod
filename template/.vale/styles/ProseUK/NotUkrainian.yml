@@ -1,0 +1,15 @@
+# Flags what the language does not contain, so the candidate set needs no list.
+# Dictionary is built at run time by scripts/ensure-dict.sh; absent, this stays quiet.
+extends: spelling
+message: "Немає в українському словнику: '%s'"
+level: suggestion
+append: false
+custom: true
+dictionaries:
+  - uk_UA
+filters:
+  - '[A-Za-z]'
+  - '^[А-ЯІЇЄҐ]'
+  - '\d'
+  - '[(),«»"”„]'
+  - '/'

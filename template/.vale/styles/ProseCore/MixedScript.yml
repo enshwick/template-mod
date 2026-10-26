@@ -1,0 +1,8 @@
+# Homoglyphs: invisible to a reader, fatal to search.
+extends: existence
+message: "Cyrillic and Latin in one word: '%s'"
+level: error
+nonword: true
+tokens:
+  - '[A-Za-z][А-Яа-яІЇЄҐіїєґ]'
+  - '[А-Яа-яІЇЄҐіїєґ][A-Za-z]'

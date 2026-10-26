@@ -1,0 +1,9 @@
+# Applies to source files, where the config points it at comments. One finding
+# per run of non-Latin text rather than per word, since the whole comment is the
+# thing to rewrite.
+extends: existence
+message: "Comment is not in English: '%s'"
+level: warning
+nonword: true
+tokens:
+  - '[А-Яа-яІЇЄҐіїєґ]{3,}(?:[^A-Za-z\n]{0,24}[А-Яа-яІЇЄҐіїєґ]{3,})*'

@@ -1,0 +1,18 @@
+# ProseUK.NotUkrainian with this project's own words kept out: the spelling
+# dictionary does not know «мод» and its forms, which the game's community
+# and these pages use. Words are added here, one filter per word with its
+# forms, never through an accept list.
+extends: spelling
+message: "Немає в українському словнику: '%s'"
+level: suggestion
+append: false
+custom: true
+dictionaries:
+  - uk_UA
+filters:
+  - '[A-Za-z]'
+  - '^[А-ЯІЇЄҐ]'
+  - '\d'
+  - '[(),«»"”„]'
+  - '/'
+  - '^мод(а|у|ом|і|и|ів|ам|ами|ах)?$'
