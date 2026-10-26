@@ -8,6 +8,7 @@ license = "MIT"
 publish = false
 
 [dependencies]
+serde_json = { version = "1.0.154", default-features = false, features = ["std"] }
 zip = { version = "9.1.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [lints]

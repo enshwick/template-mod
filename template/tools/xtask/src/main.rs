@@ -2,13 +2,18 @@
 //!
 //! `cargo xtask check` runs the compiling checks a change needs before it
 //! merges; the git hooks run only the checks that compile nothing. Clippy,
-//! the tests and the doctests run on the host, and off Windows clippy also
-//! runs for Windows through `cargo xwin`, beside the host checks. `cargo
-//! xtask check --all` adds formatting, rustdoc and cargo-deny.
+//! the tests and the doctests run on the host, where the packages that build
+//! only for Windows (`[package.metadata.enshwick] windows-only = true`) stay
+//! out; off Windows clippy also runs for Windows through `cargo xwin`,
+//! beside the host checks. `--windows` runs the Windows-only packages' tests
+//! under Wine, and `--all` adds formatting, rustdoc, cargo-deny and those
+//! tests.
 //!
-//! `cargo xtask dist` builds the release DLL and writes what a player
+//! `cargo xtask dist` builds the release DLLs and writes what a player
 //! downloads: `<package>.zip` with `mods/<package>.dll` and the license, and
-//! the PDB beside it.
+//! the PDB beside it, for every mod in the workspace.
+
+mod wine;
 
 use std::io::{Cursor, Write as _};
 use std::path::{Path, PathBuf};
@@ -16,8 +21,7 @@ use std::process::{Command, ExitCode};
 use std::thread;
 use std::time::Instant;
 
-const USAGE: &str =
-    "usage: cargo xtask check [--all] [--base <git ref>] | cargo xtask dist [--out <dir>]";
+const USAGE: &str = "usage: cargo xtask check [--all] [--windows] [--base <git ref>] | cargo xtask dist [--out <dir>]";
 const WINDOWS_TARGET: &str = "x86_64-pc-windows-msvc";
 
 fn main() -> ExitCode {
@@ -34,44 +38,110 @@ fn main() -> ExitCode {
 
 fn run(args: &[String]) -> Result<bool, String> {
     let (task, rest) = args.split_first().ok_or(USAGE)?;
-    if task == "dist" {
-        return dist(rest);
-    }
-    if task != "check" {
-        return Err(USAGE.to_owned());
+    match task.as_str() {
+        "dist" => return dist(rest),
+        "wine-run" => return wine::run_one(rest),
+        "check" => {}
+        _ => return Err(USAGE.to_owned()),
     }
     let mut all = false;
+    let mut windows = false;
     let mut rest = rest.iter();
     while let Some(arg) = rest.next() {
         match arg.as_str() {
             "--all" => all = true,
-            // One crate: every change checks all of it.
+            "--windows" => windows = true,
+            // A mod repository is small: every change checks all of it.
             "--base" => {
                 rest.next().ok_or(USAGE)?;
             }
             _ => return Err(USAGE.to_owned()),
         }
     }
-    Ok(check(all))
+    let packages = packages()?;
+    let mut ok = check(&packages, all);
+    if ok && (all || windows) {
+        let windows_only: Vec<&str> = packages
+            .iter()
+            .filter(|p| p.windows_only)
+            .map(|p| p.name.as_str())
+            .collect();
+        ok = windows_only.is_empty() || wine::run(&windows_only, windows);
+    }
+    Ok(ok)
 }
 
-/// One cargo command line with its environment.
+/// A workspace package.
+#[derive(Debug)]
+struct Package {
+    name: String,
+    windows_only: bool,
+    /// Whether it builds a DLL: a mod.
+    cdylib: bool,
+}
+
+/// The workspace packages, from `cargo metadata`.
+fn packages() -> Result<Vec<Package>, String> {
+    let output = Command::new(cargo())
+        .args(["metadata", "--format-version", "1", "--no-deps"])
+        .output()
+        .map_err(|error| format!("running cargo metadata: {error}"))?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+    }
+    let metadata: serde_json::Value = serde_json::from_slice(&output.stdout)
+        .map_err(|error| format!("reading cargo metadata: {error}"))?;
+    Ok(metadata["packages"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|package| Package {
+            name: package["name"].as_str().unwrap_or_default().to_owned(),
+            windows_only: package["metadata"]["enshwick"]["windows-only"].as_bool() == Some(true),
+            cdylib: package["targets"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(|target| {
+                    target["crate_types"]
+                        .as_array()
+                        .is_some_and(|types| types.iter().any(|t| t == "cdylib"))
+                }),
+        })
+        .collect())
+}
+
+fn cargo() -> String {
+    std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned())
+}
+
+/// One cargo command line.
 #[derive(Debug)]
 struct Step {
-    args: Vec<&'static str>,
-    env: Vec<(&'static str, &'static str)>,
+    args: Vec<String>,
+    env: Vec<(&'static str, String)>,
 }
 
 impl Step {
-    fn new(args: &[&'static str]) -> Self {
+    fn new(words: &[&str]) -> Self {
         Self {
-            args: args.to_vec(),
+            args: words.iter().map(|w| (*w).to_owned()).collect(),
             env: Vec::new(),
         }
     }
 
-    fn env(mut self, name: &'static str, value: &'static str) -> Self {
-        self.env.push((name, value));
+    fn then_owned(mut self, words: &[String]) -> Self {
+        self.args.extend_from_slice(words);
+        self
+    }
+
+    fn then(mut self, words: &[&str]) -> Self {
+        self.args.extend(words.iter().map(|w| (*w).to_owned()));
+        self
+    }
+
+    fn env(mut self, name: &'static str, value: impl Into<String>) -> Self {
+        self.env.push((name, value.into()));
         self
     }
 
@@ -83,8 +153,10 @@ impl Step {
     /// step running beside others) and shown only when it fails.
     fn run(&self, quiet: bool) -> bool {
         let started = Instant::now();
-        let mut command = Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".into()));
-        command.args(&self.args).envs(self.env.iter().copied());
+        let mut command = Command::new(cargo());
+        command
+            .args(&self.args)
+            .envs(self.env.iter().map(|(name, value)| (name, value)));
         let (ok, output) = if quiet {
             match command.output() {
                 Ok(output) => (
@@ -118,31 +190,24 @@ fn say(text: &str) {
 /// Runs the host steps one after another (they share the build lock) and
 /// the Windows lint beside them; the first failing host step ends the host
 /// checks.
-fn check(all: bool) -> bool {
-    let mut host = Vec::new();
-    if all {
-        host.push(Step::new(&["fmt", "--all", "--check"]));
+fn check(packages: &[Package], all: bool) -> bool {
+    let mut workspace = vec!["--workspace".to_owned()];
+    if !cfg!(windows) {
+        for package in packages.iter().filter(|p| p.windows_only) {
+            workspace.extend(["--exclude".to_owned(), package.name.clone()]);
+        }
     }
-    host.push(Step::new(&[
-        "clippy",
-        "--workspace",
-        "--all-targets",
-        "--",
-        "-D",
-        "warnings",
-    ]));
-    host.push(Step::new(&[
-        "nextest",
-        "run",
-        "--workspace",
-        "--no-tests=pass",
-    ]));
-    host.push(Step::new(&["test", "--doc", "--workspace"]));
+    let host = |words: &[&str]| Step::new(words).then_owned(&workspace);
+    let mut steps = Vec::new();
     if all {
-        host.push(
-            Step::new(&["doc", "--no-deps", "--workspace"]).env("RUSTDOCFLAGS", "-D warnings"),
-        );
-        host.push(Step::new(&["deny", "check"]));
+        steps.push(Step::new(&["fmt", "--all", "--check"]));
+    }
+    steps.push(host(&["clippy", "--all-targets"]).then(&["--", "-D", "warnings"]));
+    steps.push(host(&["nextest", "run", "--no-tests=pass"]));
+    steps.push(host(&["test", "--doc"]));
+    if all {
+        steps.push(host(&["doc", "--no-deps"]).env("RUSTDOCFLAGS", "-D warnings"));
+        steps.push(Step::new(&["deny", "check"]));
     }
     let windows = (!cfg!(windows)).then(|| {
         Step::new(&[
@@ -162,13 +227,13 @@ fn check(all: bool) -> bool {
     }
     thread::scope(|scope| {
         let windows = windows.as_ref().map(|step| scope.spawn(|| step.run(true)));
-        let host_passed = host.iter().all(|step| step.run(false));
+        let host_passed = steps.iter().all(|step| step.run(false));
         let windows_passed = windows.is_none_or(|handle| handle.join().unwrap_or(false));
         host_passed && windows_passed
     })
 }
 
-/// Builds the release DLL and writes the player's archive and the PDB into
+/// Builds the release DLLs and writes each mod's archive and PDB into
 /// `--out` (`target/dist` by default).
 fn dist(args: &[String]) -> Result<bool, String> {
     let out = match args {
@@ -176,12 +241,20 @@ fn dist(args: &[String]) -> Result<bool, String> {
         [flag, dir] if flag == "--out" => PathBuf::from(dir),
         _ => return Err(USAGE.to_owned()),
     };
-    let command: &[&'static str] = if cfg!(windows) {
-        &["build", "--release", "--locked", "--target", WINDOWS_TARGET]
+    let command: &[&str] = if cfg!(windows) {
+        &[
+            "build",
+            "--workspace",
+            "--release",
+            "--locked",
+            "--target",
+            WINDOWS_TARGET,
+        ]
     } else {
         &[
             "xwin",
             "build",
+            "--workspace",
             "--release",
             "--locked",
             "--target",
@@ -191,40 +264,34 @@ fn dist(args: &[String]) -> Result<bool, String> {
     if !Step::new(command).run(false) {
         return Ok(false);
     }
-    let package = package_name()?;
-    let built = Path::new("target")
-        .join(WINDOWS_TARGET)
-        .join("release")
-        .join(package.replace('-', "_"));
-    let entries = [
-        (
-            format!("mods/{package}.dll"),
-            read(&built.with_extension("dll"))?,
-        ),
-        ("LICENSE".to_owned(), read(Path::new("LICENSE"))?),
-    ];
     std::fs::create_dir_all(&out).map_err(|e| format!("{}: {e}", out.display()))?;
-    let archive = out.join(format!("{package}.zip"));
-    std::fs::write(&archive, zip(&entries)?).map_err(|e| format!("{}: {e}", archive.display()))?;
-    let pdb = out.join(format!("{package}.pdb"));
-    std::fs::copy(built.with_extension("pdb"), &pdb)
-        .map_err(|e| format!("{}: {e}", pdb.display()))?;
-    say(&format!(
-        "wrote {} and {}",
-        archive.display(),
-        pdb.display()
-    ));
+    let license = read(Path::new("LICENSE"))?;
+    for package in packages()?.iter().filter(|p| p.cdylib) {
+        let name = &package.name;
+        let built = Path::new("target")
+            .join(WINDOWS_TARGET)
+            .join("release")
+            .join(name.replace('-', "_"));
+        let entries = [
+            (
+                format!("mods/{name}.dll"),
+                read(&built.with_extension("dll"))?,
+            ),
+            ("LICENSE".to_owned(), license.clone()),
+        ];
+        let archive = out.join(format!("{name}.zip"));
+        std::fs::write(&archive, zip(&entries)?)
+            .map_err(|e| format!("{}: {e}", archive.display()))?;
+        let pdb = out.join(format!("{name}.pdb"));
+        std::fs::copy(built.with_extension("pdb"), &pdb)
+            .map_err(|e| format!("{}: {e}", pdb.display()))?;
+        say(&format!(
+            "wrote {} and {}",
+            archive.display(),
+            pdb.display()
+        ));
+    }
     Ok(true)
-}
-
-/// The package name, the first `name` in the root manifest.
-fn package_name() -> Result<String, String> {
-    let manifest = String::from_utf8(read(Path::new("Cargo.toml"))?).map_err(|e| e.to_string())?;
-    manifest
-        .lines()
-        .find_map(|line| line.strip_prefix("name = "))
-        .map(|name| name.trim_matches('"').to_owned())
-        .ok_or_else(|| "Cargo.toml names no package".to_owned())
 }
 
 fn read(path: &Path) -> Result<Vec<u8>, String> {
