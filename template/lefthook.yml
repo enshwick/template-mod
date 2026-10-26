@@ -44,11 +44,15 @@ pre-push:
     typos:
       run: typos --force-exclude {push_files}
     commits:
-      # A repository's first push has no origin/main to compare with.
-      run: >-
-        ! git rev-parse -q --verify origin/main > /dev/null ||
-        { committed origin/main..HEAD &&
-        ! git log --no-merges --format=%s origin/main..HEAD | grep -E ': [A-Z]|[<>]'; }
+      # Each commit no remote has yet, merges left out: a merge of main
+      # into a branch carries git's own message.
+      run: |
+        for commit in $(git rev-list --no-merges HEAD --not --remotes); do
+          header=$(git log -1 --format=%s "$commit")
+          case "$header" in 'Revert "'* | 'fixup! '* | 'squash! '* | 'amend! '*) continue ;; esac
+          git log -1 --format=%B "$commit" | committed --commit-file - || exit 1
+          if printf '%s\n' "$header" | grep -E ': [A-Z]|[<>]'; then exit 1; fi
+        done
     deny:
       glob:
         - 'Cargo.toml'
