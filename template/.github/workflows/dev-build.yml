@@ -1,4 +1,5 @@
-# Replaces the mod's DLL on the rolling `dev` prerelease, by hand.
+# Replaces the mod's DLL on the rolling `dev` prerelease, by hand, with its
+# PDB, its SBOM and a build provenance attestation of each file.
 name: dev-build
 
 on:
@@ -16,3 +17,6 @@ jobs:
     uses: enshwick/.github/.github/workflows/mod-dev-build.yml@main # zizmor: ignore[unpinned-uses]
     permissions:
       contents: write
+      # The build provenance attestations.
+      id-token: write
+      attestations: write
