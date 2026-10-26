@@ -277,7 +277,15 @@ fn dist(args: &[String]) -> Result<bool, String> {
             WINDOWS_TARGET,
         ]
     };
-    if !Step::new(command).run(false) {
+    // CI's dev builds embed the dependency tree in each DLL, for
+    // `cargo audit bin` and other scanners.
+    let auditable = std::env::var_os("ENSHWICK_AUDITABLE").is_some_and(|value| value == "1");
+    let command: Vec<&str> = auditable
+        .then_some("auditable")
+        .into_iter()
+        .chain(command.iter().copied())
+        .collect();
+    if !Step::new(&command).run(false) {
         return Ok(false);
     }
     std::fs::create_dir_all(&out).map_err(|e| format!("{}: {e}", out.display()))?;
