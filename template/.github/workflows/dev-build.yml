@@ -1,0 +1,18 @@
+# Replaces the mod's DLL on the rolling `dev` prerelease, by hand.
+name: dev-build
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: dev-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # main: the organization runners run only workflows from main.
+    uses: enshwick/.github/.github/workflows/mod-dev-build.yml@main # zizmor: ignore[unpinned-uses]
+    permissions:
+      contents: write

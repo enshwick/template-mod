@@ -1,0 +1,8 @@
+[alias]
+# Repository tasks, such as the checks before a merge: tools/xtask.
+xtask = "run --quiet --package xtask --"
+
+[target.x86_64-pc-windows-msvc]
+# A static CRT needs no redistributable on players' machines; x86-64-v2 is
+# what Windows 11 24H2 already requires.
+rustflags = ["-C", "target-feature=+crt-static", "-C", "target-cpu=x86-64-v2"]

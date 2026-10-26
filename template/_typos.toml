@@ -1,0 +1,16 @@
+[files]
+extend-exclude = ["CHANGELOG.md", "*.lock", "bun.lock", "*.exports"]
+
+[default.extend-words]
+# Engine and game names.
+Keen = "Keen"
+# Unreal Engine, as in UE4SS.
+UE = "UE"
+# Structured exception handling on Windows.
+SEH = "SEH"
+# The game's localisation tags, LocaTag.
+Loca = "Loca"
+
+[default]
+# Byte patterns of game code: hex bytes and `??`, such as "48 8B BA".
+extend-ignore-re = ["\"([0-9A-Fa-f?]{1,2} )+[0-9A-Fa-f?]{1,2}\""]

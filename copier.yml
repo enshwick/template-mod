@@ -1,0 +1,40 @@
+_subdirectory: template
+_answers_file: .copier-answers.yml
+_min_copier_version: "9.4"
+
+mod_id:
+  type: str
+  help: The mod's id, 1 to 64 characters of [a-z0-9-] starting with a letter (build-camera)
+  validator: >-
+    {% if not (mod_id | regex_search('^[a-z][a-z0-9-]{0,63}$')) %}not [a-z][a-z0-9-]{0,63}{% endif %}
+
+mod_name:
+  type: str
+  help: The name players read
+  default: "{{ mod_id | replace('-', ' ') | capitalize }}"
+
+description:
+  type: str
+  help: What the mod does, in one sentence
+  default: "What {{ mod_name }} does, in one sentence"
+
+side:
+  type: str
+  help: Where the mod runs
+  choices: [server, client, both]
+  default: server
+
+crate_name:
+  type: str
+  help: The crate, and the DLL as crate_name with underscores
+  default: "enshwick-{{ mod_id }}"
+
+enshwick_version:
+  type: str
+  help: The enshwick crate version the mod builds on
+  default: "1.0.0-alpha.1"
+
+repository:
+  type: str
+  help: The mod's GitHub repository
+  default: "enshwick/mod-{{ mod_id }}"

@@ -1,0 +1,24 @@
+# The merge gate: `cargo xtask check` on the organization runners through the
+# shared workflow, on every pull request and nightly.
+name: ci
+
+on:
+  pull_request:
+  schedule:
+    - cron: "37 2 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    # main: the organization runners run only workflows from main.
+    uses: enshwick/.github/.github/workflows/rust-ci.yml@main # zizmor: ignore[unpinned-uses]
+    permissions:
+      contents: read
+    with:
+      windows-tests: false
