@@ -45,7 +45,11 @@ const problems = (message: string): string[] => {
 
 const messages = async (args: string[]): Promise<Array<{ name: string; text: string }>> => {
   if (args[0] === '--range' && args[1]) {
-    const log = Bun.spawnSync(['git', 'log', '--format=%H%x00%B%x01', args[1]]);
+    // A new repository has no remote main yet: every unpushed commit counts.
+    const [from, to] = args[1].split('..');
+    const known = from && Bun.spawnSync(['git', 'rev-parse', '--verify', '--quiet', from]).exitCode === 0;
+    const range = known || !to ? [args[1]] : [to, '--not', '--remotes'];
+    const log = Bun.spawnSync(['git', 'log', '--format=%H%x00%B%x01', ...range]);
     if (log.exitCode !== 0) {
       throw new Error(log.stderr.toString());
     }
