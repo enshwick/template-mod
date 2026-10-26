@@ -1,0 +1,10 @@
+# Suffixes absent from native roots. Verb endings do not work here: Ukrainian
+# conjugation is shared between native and borrowed stems.
+extends: existence
+message: "Схоже на англіцизм за формою: '%s'"
+level: suggestion
+ignorecase: true
+tokens:
+  - \w{3,}(інг|инг)\w*
+  - \w{2,}(джит|джить|джила|джили|джено)\w*
+  - \w{3,}(айзи|айзу|айзе)\w*

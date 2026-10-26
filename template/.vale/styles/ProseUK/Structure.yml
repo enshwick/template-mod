@@ -1,0 +1,19 @@
+# Hand-derived from ai-tells. Kept at suggestion because it is unmeasured:
+# the control corpus showed several sibling constructions are commoner in human
+# prose than in machine output, so treat these as candidates, not verdicts.
+extends: existence
+message: "Машинна будова речення: '%s'"
+level: suggestion
+ignorecase: true
+tokens:
+  - виступає (як|у ролі|в ролі)
+  - слугує (як|тим|тією)
+  - являє собою
+  - постає (як|у вигляді)
+  - є не (просто|лише|тільки)
+  - підкреслюючи (важливість|значення|роль)
+  - наголошуючи на (важливості|значенні|ролі)
+  - що (свідчить|говорить) про (ширш|загальн|зростаюч)\w+
+  - відображаючи (ширші|загальні|зростаючі) тенденції
+  - демонструючи (прихильність|відданість|прагнення)
+  - тим самим (забезпечуючи|створюючи|відкриваючи)
