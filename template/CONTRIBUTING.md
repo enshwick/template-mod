@@ -7,10 +7,15 @@ rustup), [Bun](https://bun.sh) for the git hooks, cargo-nextest,
 [cargo-xwin](https://github.com/rust-cross/cargo-xwin).
 
 ```bash
-bun install          # the git hooks
+bun install          # the git hooks and markdownlint, at the pinned versions
+bun run lint:md      # markdownlint on every document, as the hooks run it
 cargo xtask check    # clippy, tests and doctests; --all adds fmt, rustdoc, cargo-deny
 cargo xtask dist     # the player's archive of each mod, in target/dist
 ```
+
+markdownlint runs from `node_modules` at the version `bun.lock` pins. A
+plain `bunx markdownlint-cli2` before `bun install` fetches the newest
+release instead, whose formatter fails to load.
 
 A package that builds only for Windows sets `windows-only = true` under
 `[package.metadata.enshwick]`. Off Windows it stays out of the host checks,

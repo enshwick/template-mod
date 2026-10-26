@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "lint:md": "markdownlint-cli2 --no-globs $(git ls-files '*.md')",
     "prepare": "lefthook install"
   },
   "devDependencies": {
