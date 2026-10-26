@@ -14,10 +14,16 @@ pre-commit:
     typos:
       run: typos --force-exclude {staged_files}
 
+# committed checks the header against committed.toml. Messages git writes
+# itself (merges, reverts, fixups) pass as they are. A subject starts in
+# lower case, and angle brackets would read as HTML in the release notes.
 commit-msg:
   commands:
     conventional:
-      run: bun tools/check-commit-message.ts {1}
+      run: >-
+        head -n1 {1} | grep -qE '^(Merge |Revert "|fixup! |squash! |amend! )' ||
+        { committed --commit-file {1} &&
+        ! head -n1 {1} | grep -E ': [A-Z]|[<>]'; }
 
 # Nothing that compiles: the hook stays under ten seconds. The compiling
 # checks are `cargo xtask check` (what the branch touches) and
@@ -38,7 +44,11 @@ pre-push:
     typos:
       run: typos --force-exclude {push_files}
     commits:
-      run: bun tools/check-commit-message.ts --range origin/main..HEAD
+      # A repository's first push has no origin/main to compare with.
+      run: >-
+        ! git rev-parse -q --verify origin/main > /dev/null ||
+        { committed origin/main..HEAD &&
+        ! git log --no-merges --format=%s origin/main..HEAD | grep -E ': [A-Z]|[<>]'; }
     deny:
       glob:
         - 'Cargo.toml'
