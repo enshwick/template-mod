@@ -1,5 +1,10 @@
 _subdirectory: template
 _answers_file: .copier-answers.yml
+# The mod's own code and texts start from the template and are the mod's
+# from then on: copier update leaves them alone.
+_skip_if_exists:
+  - src/lib.rs
+  - src/texts.toml
 _min_copier_version: "9.4"
 
 mod_id:

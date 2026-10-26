@@ -5,6 +5,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use enshwick::{Load, Mod, Off};
 
+/// The mod's texts, a table per language; the settings' labels among them.
+const TEXTS: &str = include_str!("texts.toml");
+
 /// Whether the mod does its work now; a settings change updates it.
 static ENABLED: AtomicBool = AtomicBool::new(true);
 
@@ -37,6 +40,7 @@ impl Mod for {{ type_name }} {
     }
 
     fn init(load: &mut Load<'_>) -> Result<Self, Off> {
+        load.texts(TEXTS)?;
         let settings: Settings = load.config()?;
         ENABLED.store(settings.enabled, Ordering::Relaxed);
         load.on_config_change(|settings: Settings| {
@@ -51,9 +55,21 @@ enshwick::declare_mod!({{ type_name }});
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use enshwick::abi::Status;
 
     use super::*;
+
+    #[test]
+    fn every_text_exists_in_all_languages() {
+        let languages: BTreeMap<String, BTreeMap<String, String>> = toml::from_str(TEXTS).unwrap();
+        for (language, entries) in &languages {
+            for key in languages.values().flat_map(BTreeMap::keys) {
+                assert!(entries.contains_key(key), "{key} has no {language}");
+            }
+        }
+    }
 
     #[test]
     fn starts_with_the_settings_it_reads() {
