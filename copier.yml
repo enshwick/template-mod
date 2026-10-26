@@ -5,6 +5,8 @@ _answers_file: .copier-answers.yml
 _skip_if_exists:
   - src/lib.rs
   - src/texts.toml
+  - docs/player.md
+  - docs/player.uk.md
 _min_copier_version: "9.4"
 
 mod_id:

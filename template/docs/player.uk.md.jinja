@@ -1,0 +1,34 @@
+---
+id: {{ mod_id }}
+name: {{ mod_name }}
+summary: {{ description | trim('.') }}.
+{#- A mod with side both that sets join: true needs everyone; one that only
+    the server or host needs is server. #}
+needs: {% if side == 'server' %}server{% elif side == 'client' %}client{% else %}everyone{% endif %}
+settings:
+  - key: enabled
+    default: true
+    meaning: Чи мод виконує свою роботу.
+    applies: at-once
+---
+
+- {{ description | trim('.') }}.
+
+## Встановлення
+
+Завантажте {{ mod_name }} з його
+[випусків](https://github.com/{{ repository }}/releases) і покладіть у теку гри,
+як показує
+[посібник зі встановлення](https://enshwick.github.io/docs/uk/guides/install/).
+Мод працює на enshwick.
+
+## Налаштування
+
+Ці значення змінюються в грі, як показує
+[посібник про налаштування](https://enshwick.github.io/docs/uk/guides/change-mod-settings/).
+
+## Проблеми
+
+**Щось пішло не так.** Відкрийте звернення в
+[репозиторії мода](https://github.com/{{ repository }}/issues). Додайте файли з
+теки `logs/enshwick/` у теці гри.
