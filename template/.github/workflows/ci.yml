@@ -9,8 +9,11 @@ on:
   pull_request:
   push:
     branches: [main]
+  # GitHub delays scheduled runs for hours and drops most of them: a try
+  # every half hour through the night, and the gate lets the first through.
+  # A try the gate stops costs one hosted job of seconds.
   schedule:
-    - cron: "37 2 * * *"
+    - cron: "7,37 0-8 * * *"
   workflow_dispatch:
     inputs:
       nightly:
@@ -27,7 +30,49 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # A scheduled run goes ahead unless a nightly lane ran, failed or runs
+  # since 00:00 UTC that day: a failed night is not run again by the next
+  # try, it is fixed, and a run by hand during the day leaves the next night
+  # alone.
+  gate:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          since=$(date -u +%Y-%m-%dT00:00:00Z)
+          ran=false
+          # Listed per event, so the runs of pull requests and pushes
+          # never push an earlier night out of the list.
+          ids=$(for event in schedule workflow_dispatch; do
+            gh run list -R "$REPO" --workflow ci.yml --event "$event" --created ">=$since" \
+              --limit 100 --json databaseId -q '.[].databaseId'
+          done)
+          for id in $ids; do
+            [ "$id" = "$RUN_ID" ] && continue
+            if gh run view "$id" -R "$REPO" --json jobs -q '.jobs[]
+                | select(.name == "nightly / nightly")
+                | select(.status != "completed" or .conclusion == "success" or .conclusion == "failure")
+                | .name' | grep -q .; then
+              ran=true
+              echo "the nightly lane ran in run $id"
+              break
+            fi
+          done
+          echo "run=$([ "$ran" = true ] && echo false || echo true)" >> "$GITHUB_OUTPUT"
+
   rust:
+    needs: gate
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.gate.outputs.run == 'true') }}
     # main: the organization runners run only workflows from main.
     uses: enshwick/.github/.github/workflows/rust-ci.yml@main # zizmor: ignore[unpinned-uses]
     permissions:
@@ -38,7 +83,8 @@ jobs:
       ENSHWICK_CI_PRIVATE_KEY: ${{ secrets.ENSHWICK_CI_PRIVATE_KEY }}
 
   nightly:
-    if: github.event_name == 'schedule' || inputs.nightly
+    needs: gate
+    if: ${{ !cancelled() && ((github.event_name == 'schedule' && needs.gate.outputs.run == 'true') || inputs.nightly) }}
     uses: enshwick/.github/.github/workflows/rust-nightly.yml@main # zizmor: ignore[unpinned-uses]
     permissions:
       contents: read
