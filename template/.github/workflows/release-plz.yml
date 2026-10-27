@@ -1,7 +1,8 @@
 # Release pull requests and releases with release-plz (release-plz.toml), run
 # by hand only. `release-pr` opens or updates the release pull request and
 # starts ci.yml on it; `release`, after that pull request merged, tags the
-# mod `v<version>` and makes its GitHub release.
+# mod `v<version>`, makes its GitHub release and attaches the zip, the PDB,
+# the SBOM, their sums and a build provenance attestation of each.
 name: release-plz
 
 on:
@@ -28,3 +29,14 @@ jobs:
     uses: enshwick/.github/.github/workflows/release-plz.yml@main # zizmor: ignore[unpinned-uses]
     with:
       command: ${{ inputs.command }}
+
+  assets:
+    needs: release-plz
+    if: inputs.command == 'release' && needs.release-plz.outputs.releases != '' && needs.release-plz.outputs.releases != '[]'
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    uses: enshwick/.github/.github/workflows/release-assets.yml@main # zizmor: ignore[unpinned-uses]
+    with:
+      tag: ${{ fromJSON(needs.release-plz.outputs.releases)[0].tag }}
