@@ -43,7 +43,7 @@ crate_name:
 enshwick_version:
   type: str
   help: The enshwick crate version the mod builds on
-  default: "1.0.0-alpha.10"
+  default: "1.0.0-alpha.11"
 
 repository:
   type: str
