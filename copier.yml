@@ -21,8 +21,8 @@ mod_id:
 
 mod_name:
   type: str
-  help: The name players read
-  default: "{{ (mod_id.split('.') | last) | replace('-', ' ') | capitalize }}"
+  help: The name players read, in title case; every language shows it unchanged
+  default: "{{ (mod_id.split('.') | last) | replace('-', ' ') | title }}"
 
 description:
   type: str
