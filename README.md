@@ -26,6 +26,6 @@ platform's `main` branch instead, as the rolling `dev` loader does, answer
 keeps exactly as rendered. CI fails a pull request whose copy differs.
 
 `cargo enshwick new` writes the same mod crate as this template, without the
-repository's tools. CI renders the crate, compares it with the one `new`
-writes, and builds and tests both on the platform's `main` branch, or on a
-platform branch of the same name as the pull request's.
+repository's tools. CI renders the crate and compares it with the one `new`
+writes. Then it tests both crates on the platform's `main` branch, or on the
+platform branch named like the pull request's branch.
