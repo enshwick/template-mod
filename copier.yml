@@ -42,7 +42,7 @@ crate_name:
 
 enshwick_version:
   type: str
-  help: The enshwick crate version the mod builds on
+  help: The enshwick crate version the mod builds on, pinned with = since a mod loads only under that release
   default: "1.0.0-alpha.11"
 
 repository:
