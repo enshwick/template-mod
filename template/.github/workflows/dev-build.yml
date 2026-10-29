@@ -1,6 +1,6 @@
 # Replaces the mod's DLL on the rolling `dev` prerelease with its PDB, its
 # SBOM and a build provenance attestation of each file, then starts the docs
-# site's build. Every push to main that changes what the DLL builds from
+# site's build and the platform's dev bundle, which carries the mod. Every push to main that changes what the DLL builds from
 # runs it, a bump of the platform's commit included, so `dev` always carries
 # main and matches the platform's `dev` loader; a run by hand rebuilds it.
 name: dev-build
@@ -42,6 +42,15 @@ jobs:
   docs:
     needs: build
     uses: enshwick/.github/.github/workflows/docs-rebuild.yml@main # zizmor: ignore[unpinned-uses]
+    secrets:
+      ENSHWICK_CI_CLIENT_ID: ${{ secrets.ENSHWICK_CI_CLIENT_ID }}
+      ENSHWICK_CI_PRIVATE_KEY: ${{ secrets.ENSHWICK_CI_PRIVATE_KEY }}
+
+  # The platform's dev bundle takes the mod from its dev prerelease; start
+  # the bundle's build once the prerelease moved.
+  bundle:
+    needs: build
+    uses: enshwick/.github/.github/workflows/bundle-rebuild.yml@main # zizmor: ignore[unpinned-uses]
     secrets:
       ENSHWICK_CI_CLIENT_ID: ${{ secrets.ENSHWICK_CI_CLIENT_ID }}
       ENSHWICK_CI_PRIVATE_KEY: ${{ secrets.ENSHWICK_CI_PRIVATE_KEY }}
