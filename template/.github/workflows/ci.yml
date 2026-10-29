@@ -57,10 +57,13 @@ jobs:
             gh run list -R "$REPO" --workflow ci.yml --event "$event" --created ">=$since" \
               --limit 100 --json databaseId -q '.[].databaseId'
           done)
+          # Any part of the lane counts: GitHub lists a job only once the
+          # jobs it needs have finished, so the closing `nightly / nightly`
+          # is missing while the parts still run.
           for id in $ids; do
             [ "$id" = "$RUN_ID" ] && continue
             if gh run view "$id" -R "$REPO" --json jobs -q '.jobs[]
-                | select(.name == "nightly / nightly")
+                | select(.name | startswith("nightly / "))
                 | select(.status != "completed" or .conclusion == "success" or .conclusion == "failure")
                 | .name' | grep -q .; then
               ran=true
