@@ -16,6 +16,10 @@ static ENABLED: AtomicBool = AtomicBool::new(true);
 #[serde(deny_unknown_fields)]
 struct Settings {
     /// Whether the mod does its work.
+    // `startup` (applied when a world loads), `runtime` (applied by
+    // on_config_change), `client` (each player's own), `sync` (the server's
+    // value) or `restart` (read once as the game starts), and for numbers
+    // `range = 1..=10`, for lists of values `choices = [..]`.
     #[config(runtime)]
     enabled: bool,
 }
@@ -35,7 +39,16 @@ impl Mod for {{ type_name }} {
         enshwick::manifest!(
             id: "{{ mod_id }}",
             side: {{ side | upper }},
+            // What players read; description, authors, license and homepage
+            // come from Cargo.toml.
             name: "{{ mod_name }}",
+            // Mods this one works better with, and mods it does not work
+            // beside, each with a version range ("" for any):
+            // recommends: ["someone.other-mod" => ">=0.2, <1.0"],
+            // breaks: ["someone.old-mod" => "<0.3"],
+            // After a rename, the old ids: their DLLs never start, and
+            // their settings and data carry over on the first start:
+            // was: ["you.old-name"],
         )
     }
 

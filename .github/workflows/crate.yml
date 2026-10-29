@@ -1,0 +1,24 @@
+# Renders the mod crate, compares it with the crate `cargo enshwick new`
+# writes, and builds and tests both, through the platform's workflow.
+name: crate
+
+on:
+  pull_request:
+    paths:
+      - template/**
+      - copier.yml
+      - .github/workflows/crate.yml
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: crate-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  crate:
+    permissions:
+      contents: read
+    # main: the platform's workflow follows the platform's main branch.
+    uses: enshwick/enshwick/.github/workflows/template.yml@main # zizmor: ignore[unpinned-uses]
