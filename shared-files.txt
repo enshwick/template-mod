@@ -16,13 +16,3 @@ lefthook.yml
 renovate.json
 rust-toolchain.toml
 rustfmt.toml
-.vale.ini
-.vale/styles/Enshwick/NotUkrainian.yml
-.vale/styles/ProseCore/CommentLanguage.yml
-.vale/styles/ProseCore/Formatting.yml
-.vale/styles/ProseCore/MixedScript.yml
-.vale/styles/ProseCore/Typography.yml
-.vale/styles/ProseUK/Apostrophe.yml
-.vale/styles/ProseUK/Morphology.yml
-.vale/styles/ProseUK/NotUkrainian.yml
-.vale/styles/ProseUK/Structure.yml

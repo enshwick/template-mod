@@ -5,13 +5,3 @@ node_modules/
 .DS_Store
 .env
 .env.*
-# Generated prose rules and dictionaries, built locally into .vale/styles.
-/.vale/styles/config/
-/.vale/styles/ai-tells/
-/.vale/styles/write-good/
-/.vale/styles/ENDocs/
-/.vale/styles/ProseEN/Plain.yml
-/.vale/styles/ProseUK/Barbarism.yml
-/.vale/styles/ProseUK/Calque.yml
-/.vale/styles/ProseUK/Preferred.yml
-/.vale/styles/UK*/
