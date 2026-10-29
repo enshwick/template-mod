@@ -17,5 +17,10 @@ copier update --trust                                     # in a mod repository:
 
 Then run `bun install` once for the git hooks, and commit `bun.lock`.
 
+A new mod builds on the `enshwick` release on crates.io. To build on the
+platform's `main` branch instead, as the rolling `dev` loader does, answer
+`enshwick_rev` with a full commit hash of `enshwick/enshwick`
+(`-d enshwick_rev=<commit>`); Renovate then moves that commit forward.
+
 [shared-files.txt](shared-files.txt) lists the files a rendered repository
 keeps exactly as rendered. CI fails a pull request whose copy differs.

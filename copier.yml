@@ -45,6 +45,16 @@ enshwick_version:
   help: The enshwick crate version the mod builds on, pinned with = since a mod loads only under that release
   default: "1.0.0-alpha.11"
 
+# Empty for the crates.io release above. A commit of enshwick/enshwick
+# builds the mod against the platform's main branch from git instead, so it
+# matches the loader of the rolling dev bundle.
+enshwick_rev:
+  type: str
+  help: A full commit hash of enshwick/enshwick to build on from git, or empty for the crates.io release
+  default: ""
+  validator: >-
+    {% if enshwick_rev and not (enshwick_rev | regex_search('^[0-9a-f]{40}$')) %}not a full 40-character commit hash{% endif %}
+
 repository:
   type: str
   help: The mod's GitHub repository

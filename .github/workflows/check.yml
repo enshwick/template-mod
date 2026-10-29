@@ -22,7 +22,9 @@ jobs:
       render: |
         mod_id=enshwick.test-mod
         mod_id=someone.x2 side=client
+        mod_id=enshwick.git-mod enshwick_rev=6477a95ffec44997eff6b58cb834beb200072b6a
       refuse: |
         mod_id=test-mod
+        mod_id=enshwick.git-mod enshwick_rev=6477a95
         mod_id=a.b.c
         mod_id=Upper.case

@@ -17,11 +17,11 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-enshwick = "={{ enshwick_version }}"
+enshwick.workspace = true
 serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
 
 [dev-dependencies]
-enshwick = { version = "={{ enshwick_version }}", features = ["test"] }
+enshwick = { workspace = true, features = ["test"] }
 toml = { version = "1.1.8", default-features = false, features = ["std", "parse", "serde"] }
 
 [lints]
@@ -31,6 +31,13 @@ workspace = true
 members = [".", "tools/xtask"]
 resolver = "3"
 
+[workspace.dependencies]
+{% if enshwick_rev -%}
+# The platform from git, at a commit of its main branch.
+enshwick = { git = "https://github.com/enshwick/enshwick", rev = "{{ enshwick_rev }}" }
+{% else -%}
+enshwick = "={{ enshwick_version }}"
+{% endif %}
 [workspace.lints.rust]
 missing_docs = "deny"
 missing_debug_implementations = "deny"

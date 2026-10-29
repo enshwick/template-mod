@@ -30,3 +30,5 @@ deny = [
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# The platform, for a mod that builds on its main branch from git.
+allow-git = ["https://github.com/enshwick/enshwick"]
