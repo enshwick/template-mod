@@ -1,16 +1,31 @@
-# Replaces the mod's DLL on the rolling `dev` prerelease, by hand, with its
-# PDB, its SBOM and a build provenance attestation of each file, then starts
-# the docs site's build.
+# Replaces the mod's DLL on the rolling `dev` prerelease with its PDB, its
+# SBOM and a build provenance attestation of each file, then starts the docs
+# site's build. Every push to main that changes what the DLL builds from
+# runs it, a bump of the platform's commit included, so `dev` always carries
+# main and matches the platform's `dev` loader; a run by hand rebuilds it.
 name: dev-build
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "**/src/**"
+      - "**/Cargo.toml"
+      - Cargo.lock
+      - rust-toolchain.toml
+      - .cargo/**
+      - tools/xtask/**
+      - LICENSE
+      - .github/workflows/dev-build.yml
   workflow_dispatch:
 
 permissions: {}
 
+# One build at a time, never cut off half way through replacing the files;
+# of the pushes that wait, only the newest is built.
 concurrency:
   group: dev-build
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
